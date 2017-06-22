@@ -69,12 +69,16 @@ direction = 'xia'
 def next_step():
     # 方便调用
     global direction
+    map_size=game.data['map']['map_size']
     snake_list = game.data['snake_list']
     mapdata = game.data['mapdata']
 
     # 判断是否有苹果，没有就创造一个
     if 1 not in mapdata.values():
         create_apple()
+
+    # 记录蛇身体的最后一节的位置
+    last_snake_position = snake_list[-1]
 
     # 更新蛇身
     for i in range(len(snake_list) - 1, 0, -1):
@@ -93,6 +97,35 @@ def next_step():
         y_head = y_head + 1
     snake_list[0] = (x_head, y_head)
 
+    apple_position=(-1,-1)
+    # 获得苹果位置
+    for k,v in mapdata.items():
+        if v==1:
+            apple_position=k
+            break
+    # 判断是否吃到苹果，如果吃到苹果则加一节身体
+    if snake_list[0] == apple_position:
+        # 苹果消失,所有地格变为0
+        for k in mapdata:
+            mapdata[k]=0
+        # 延长蛇身,把动前最后的一个位置添加到蛇身体中
+        snake_list.append(last_snake_position)
+
+    # 身体碰撞检测
+    if snake_list[0] in snake_list[1::]:
+        game.pl('蛇碰到了它的身体，你失败了', style='special')
+        open_func()
+        return
+
+    # 超出边界检测
+    if snake_list[0][0]<0 or snake_list[0][0]>=map_size or snake_list[0][1]<0 or snake_list[0][1]>=map_size:
+        game.pl('蛇碰到了墙壁，你失败了', style='special')
+        open_func()
+        return
+
+    # 返回主函数
+    main_func()
+
 def main_func():
     # 新界面准备
     game.clr_cmd()
@@ -106,7 +139,6 @@ def main_func():
             global direction
             direction = direction_name
             next_step()
-            main_func()
         return func
 
     # 状态显示
